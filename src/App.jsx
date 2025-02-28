@@ -5,6 +5,7 @@ import CodeEditor from './components/CodeEditor';
 import Terminal from './components/Terminal';
 import AIAssistant from './components/AIAssistant';
 import CommandPalette from './components/CommandPalette';
+import JSZip from 'jszip';
 
 // First, add this function near your other imports
 const readFileAsText = (file) => {
@@ -160,6 +161,69 @@ function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  // Add these functions in your App component
+
+  const saveFile = (filePath, content) => {
+    // Update the file content in the project structure
+    const updateFileContent = (node) => {
+      if (node.type === 'file' && node.path === filePath) {
+        node.content = content;
+        return true;
+      }
+      if (node.type === 'directory' && node.children) {
+        for (const child of node.children) {
+          if (updateFileContent(child)) return true;
+        }
+      }
+      return false;
+    };
+
+    setProjectRoot(prevRoot => {
+      const newRoot = { ...prevRoot };
+      updateFileContent(newRoot);
+      return newRoot;
+    });
+  };
+
+  const downloadProject = () => {
+    // Create a ZIP file of the project
+    const zip = new JSZip();
+
+    const addToZip = (node, currentPath = '') => {
+      if (node.type === 'file') {
+        zip.file(currentPath + '/' + node.name, node.content);
+      } else if (node.type === 'directory') {
+        node.children.forEach(child => {
+          addToZip(child, currentPath ? currentPath + '/' + node.name : node.name);
+        });
+      }
+    };
+
+    addToZip(projectRoot);
+
+    // Generate and download the ZIP file
+    zip.generateAsync({ type: 'blob' }).then(content => {
+      const url = URL.createObjectURL(content);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = projectRoot.name + '.zip';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+  };
+
+  // Add this to your command palette commands
+  const commands = [
+    // ... existing commands ...
+    { 
+      id: 'download-project', 
+      label: 'Download Project', 
+      action: downloadProject 
+    },
+  ];
+
   return (
     <div className="flex flex-col h-screen bg-gray-900 text-gray-200">
       {/* Header/Toolbar */}
@@ -244,7 +308,7 @@ function App() {
           {/* Editor Area */}
           <div className="flex-1 overflow-hidden">
             {activeFile ? (
-              <CodeEditor file={activeFile} />
+              <CodeEditor file={activeFile} onSave={saveFile} />
             ) : (
               <div className="flex items-center justify-center h-full text-gray-500">
                 <div className="text-center">
@@ -322,6 +386,7 @@ function App() {
             { id: 'toggle-sidebar', label: 'Toggle Sidebar', action: toggleSidebar },
             { id: 'toggle-terminal', label: 'Toggle Terminal', action: toggleTerminal },
             { id: 'toggle-ai', label: 'Toggle AI Assistant', action: toggleAIAssistant },
+            { id: 'download-project', label: 'Download Project', action: downloadProject },
           ]}
         />
       )}

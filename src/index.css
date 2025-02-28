@@ -6,3 +6,78 @@
 input[type="file"][webkitdirectory] {
   display: none;
 }
+
+/* Add these styles for the code editor */
+pre {
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  tab-size: 2;
+  overflow: hidden !important;
+}
+
+pre[contenteditable] {
+    caret-color: white;
+  }
+
+/* Code editor styles */
+textarea {
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace !important;
+  tab-size: 2;
+  -moz-tab-size: 2;
+  overflow: auto !important;
+}
+
+.syntax-highlight {
+  position: relative;
+}
+
+.syntax-highlight textarea {
+  background: transparent !important;
+}
+
+/* Code editor styles */
+.hljs {
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+pre code.hljs {
+  padding: 0 !important;
+}
+
+/* Add these styles for proper text selection */
+.hljs::selection,
+.hljs *::selection {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+textarea::selection {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  color: transparent;
+}
+
+/* Code editor container styles */
+.editor-container {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Scrollbar styling */
+.editor-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.editor-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.editor-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.editor-scroll::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
