@@ -1,0 +1,8 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Add this to your existing CSS */
+input[type="file"][webkitdirectory] {
+  display: none;
+}
