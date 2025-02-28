@@ -172,7 +172,12 @@ function App() {
           >
             <Menu size={20} />
           </button>
-          <h1 className="text-xl font-semibold">JS Code IDE</h1>
+          <h1 className="text-xl font-semibold">
+            <span className="text-blue-400">Q</span>
+            <span className="text-gray-200">I</span>
+            <span className="text-green-400">D</span>
+            <span className="text-red-400">E</span>
+          </h1>
         </div>
         <div className="flex items-center space-x-2">
           <button 
