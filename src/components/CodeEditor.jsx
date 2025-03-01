@@ -3,9 +3,8 @@ import hljs from 'highlight.js';
 import 'highlight.js/styles/atom-one-dark.css';
 import { Save } from 'lucide-react'; // Add this import
 
-const CodeEditor = ({ file, onSave }) => {
+const CodeEditor = ({ file, isModified, onChange, onSave }) => {
   const [content, setContent] = useState(file?.content || '');
-  const [isModified, setIsModified] = useState(false);
   const editorRef = useRef(null);
   const [cursorLine, setCursorLine] = useState(1);
   const originalContent = useRef(file?.content || '');
@@ -68,16 +67,13 @@ const CodeEditor = ({ file, onSave }) => {
     if (file) {
       setContent(file.content);
       originalContent.current = file.content;
-      setIsModified(false);
     }
   }, [file]);
 
   useEffect(() => {
-    // Check if content is modified
-    setIsModified(content !== originalContent.current);
-    
     if (editorRef.current) {
       const cursorPosition = saveCaretPosition(editorRef.current);
+      editorRef.current.removeAttribute('data-highlighted'); // Remove highlight flag
       editorRef.current.innerHTML = hljs.highlight(content || ' ', {
         language: getFileLanguage(file.name)
       }).value;
@@ -89,7 +85,6 @@ const CodeEditor = ({ file, onSave }) => {
     if (onSave) {
       onSave(file.path, content);
       originalContent.current = content;
-      setIsModified(false);
     }
   };
 
@@ -108,6 +103,7 @@ const CodeEditor = ({ file, onSave }) => {
   const handleInput = (e) => {
     const plainText = e.target.innerText;
     setContent(plainText);
+    onChange?.(file.path, plainText);
   };
 
   if (!file) {

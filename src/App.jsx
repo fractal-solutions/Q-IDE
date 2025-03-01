@@ -17,7 +17,9 @@ const readFileAsText = (file) => {
   });
 };
 
-function App() {
+const App = () => {
+  const [files, setFiles] = useState(new Map()); // Map<path, {content, isModified}>
+  const [activeFilePath, setActiveFilePath] = useState(null);
   const [activeTab, setActiveTab] = useState('editor');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [terminalOpen, setTerminalOpen] = useState(false);
@@ -113,14 +115,72 @@ function App() {
   };
 
   const handleFileOpen = (file) => {
-    // Check if file is already open
-    const isOpen = openFiles.some(f => f.path === file.path);
-    
-    if (!isOpen) {
-      setOpenFiles([...openFiles, file]);
+    // First check if file is already open
+    const existingFile = openFiles.find(f => f.path === file.path);
+    if (!existingFile) {
+      setOpenFiles(prev => [...prev, file]);
+      // Initialize file in files Map if it's new
+      if (!files.has(file.path)) {
+        setFiles(prev => new Map(prev).set(file.path, {
+          content: file.content,
+          isModified: false,
+          originalContent: file.content
+        }));
+      }
     }
-    
     setActiveFile(file);
+  };
+
+  const handleFileSave = (path, content) => {
+    // Update files Map
+    setFiles(prev => {
+      const newFiles = new Map(prev);
+      newFiles.set(path, {
+        content,
+        isModified: false,
+        originalContent: content
+      });
+      return newFiles;
+    });
+
+    // Update project structure
+    setProjectRoot(prevRoot => {
+      const newRoot = { ...prevRoot };
+      const updateFileInTree = (node, pathParts) => {
+        if (pathParts.length === 0) return false;
+        
+        if (node.type === 'file' && node.name === pathParts[pathParts.length - 1]) {
+          node.content = content;
+          return true;
+        }
+        
+        if (node.type === 'directory' && node.children) {
+          for (const child of node.children) {
+            if (updateFileInTree(child, pathParts)) {
+              return true;
+            }
+          }
+        }
+        return false;
+      };
+
+      const pathParts = path.split('/');
+      updateFileInTree(newRoot, pathParts);
+      return newRoot;
+    });
+  };
+
+  const handleFileChange = (path, content) => {
+    setFiles(prev => {
+      const file = prev.get(path);
+      const newFiles = new Map(prev);
+      newFiles.set(path, {
+        ...file,
+        content,
+        isModified: content !== file.originalContent
+      });
+      return newFiles;
+    });
   };
 
   const handleFileClose = (filePath) => {
@@ -308,7 +368,15 @@ function App() {
           {/* Editor Area */}
           <div className="flex-1 overflow-hidden">
             {activeFile ? (
-              <CodeEditor file={activeFile} onSave={saveFile} />
+              <CodeEditor 
+                file={{
+                  ...activeFile,
+                  content: files.get(activeFile.path)?.content || activeFile.content
+                }}
+                isModified={files.get(activeFile.path)?.isModified || false}
+                onChange={handleFileChange}
+                onSave={handleFileSave}
+              />
             ) : (
               <div className="flex items-center justify-center h-full text-gray-500">
                 <div className="text-center">
